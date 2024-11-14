@@ -1,0 +1,297 @@
+Java - Reactive Programming
+
+*********************************************************************************************************
+                                        Section 1 : Introduction
+*********************************************************************************************************
+
+Index:
+
+- Process / Thread / RAM / CPU / Scheduler
+- Sync / Async / Non-Blocking / Non-Blocking + Async
+- IO communication patterns
+- Reactive programming
+        . What is it?
+        . Why do we need it?
+        . How does it work?
+        . Why can I not use virtual threads?
+        . Principles of reactive programming
+
+
+
+*********************************************************************************************************
+
+                                        Lesson 1 - some theory
+
+
+OOP pillars:
+- abstraction
+- encapsulation
+- inheritance
+- polymorphism
+
+Reactive programming concepts:
+
+- non-blocking
+- asynchronous
+- stream based communication
+- backpressure handling
+
+
+/// Process / Thread / RAM / CPU / Scheduler ///
+
+
+Process: allocated in RAM
+    Thread: a part of the process, it's related to execution
+    
+Scheduler: it determines the order and duration of thread execution
+
+CPU: responsible of process execution
+
+
+*********************************************************************************************************
+
+                                        Lesson 2 - IO Models
+
+
+Inbound / Outbound  (4 types)
+
+- Sync
+    It's blocking. Similar to call center interaction.
+    You can't do nothing until the agent response you back.
+
+
+
+- Async
+    Ex: I called my friend and ask him to call the insurance company.
+    The main concept is delegation. I have no necessity of wait a response.
+    A thread is created to do the delegation of the task. But my friend is still blocked.
+
+
+
+- non-blocking
+    Ex: I give my number to the call center and an agent call me later.
+    A thread send the request and it's free to do some other task. After some time I receive
+    a notification.
+
+
+
+- non-blocking + async
+    Ex: I give my friend's number and an agent call him back later.
+    The second application send the notifition and my OS use another thread to do the task.
+
+
+*********************************************************************************************************
+
+                    Lesson 3 - Why can I not use virtual threads?
+
+Communication patterns:
+
+
+    - request -> response (classic)
+        Whit this approch virtual threads are enough, but reactive programming has more than this king of
+        communication.
+
+    - request -> streaming response          ex: delivery food
+            <--------------
+    
+
+    - streaming request     response         ex: apple watch, google docs
+        -------------------->
+                              <-
+
+
+    - bidirectional streaming                ex: exchanging messages like humans talk
+      ----------------------->
+      <-----------------------
+
+
+
+*********************************************************************************************************
+
+                                Lesson 4 - What is reactive programming?
+
+
+It's a paradigm designed to process "streams of messages" in a "non-blocking" and "asynchronous" manner,
+while handling "back pressure". It's base on Observer pattern.
+
+
+*********************************************************************************************************
+
+                                Lesson 5 - Streams specification
+
+
+Observer pattern consists in react to other actions like dependency cells with formulas in sheets
+
+    Publisher
+        - subscribe()
+
+    Processor: Hybrid between Publisher and Subscriber
+
+    Subscription
+        - request()
+        - cancel()
+
+    Subscriber
+        - onSubscribe()
+        - onNext()
+        - onError()
+        - onComplete()
+
+
+Reactive streams - Implementation
+
+    - Akka streams
+    - rxJava2
+    - Reactor
+        . Spring Webflux
+        . R2DBC (Postgres, MySQL, H2)
+        . Redis
+        . ElasticSearch
+        . Mongo
+        . Kafka
+        . RabbitMQ
+    
+
+*********************************************************************************************************
+
+                                Lesson 6 - Publisher / Subscriber Communication
+
+
+
+Step1: Subscriber wants to connect
+----------------------------------
+
+
+        Publisher   <-----------------      Subscriber
+
+
+The Subscriber wants to get information or updates from the Publisher.
+The Subscriber uses the subscribe() method of Publisher interface to get the data.
+
+
+Step2: Publisher calls onSubscribe
+----------------------------------
+
+The Publisher receives the Subscriber request and give the Subscription object throgh
+onSubscribe() method of Subscriber interface.
+
+
+        Publisher   <-----------------          Subscriber
+                    -> [Object(Subscription)]
+
+
+Step3: Subscription
+-------------------
+
+At this point the communication between Publisher and Subscriber is doing through
+the Subscription. If the Subscriber wants some update from the Publisher it uses the
+request() method of Subscription interface. Otherwise it uses cancel() method.
+
+
+Publisher                                            Subscriber
+    ^                                                    |
+    |                                                    | 
+    --------------  Subscription  <----------------------
+
+
+Step4: Publisher pushes data via onNext
+----------------------------------------
+
+The Publisher use the onNext() method of the Subscriber to returns the requested information.
+The Subscriber requests for 3 items and the Publisher gives 3 items.
+
+                                    *  *  *
+Publisher   ---------------------------------------> Subscriber
+    ^                                                    |
+    |                                                    | 
+    --------------  Subscription  <----------------------   request = 3
+
+
+Step5: onComplete
+------------------
+
+When the Publisher has no item to emit, it calls the onComplete method to notify the Subscriber
+that the requested items have already been emitted.
+The communication is ended at this point.
+
+
+Publisher   ----------------->     Subscriber
+
+
+
+Step6: onError
+---------------
+
+If the Publisher has a problem processing the request, it uses the onError method no notify the issue to the Subscriber.
+The Subscriber will not send anything after onError.
+
+
+
+Terminologies (synonyms):
+-------------
+
+. Publisher
+    - Source
+    - Observable
+    - Upstream
+    - Producer
+
+
+. Subscriber
+    - Sink
+    - Observer
+    - Downstream
+    - Consumer
+
+
+. Processor
+    - Operator
+
+
+
+
+*********************************************************************************************************
+*********************************************************************************************************
+*********************************************************************************************************
+*********************************************************************************************************
+*********************************************************************************************************
+*********************************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
