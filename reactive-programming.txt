@@ -249,21 +249,141 @@ Terminologies (synonyms):
 
 
 
-
 *********************************************************************************************************
-*********************************************************************************************************
-*********************************************************************************************************
-*********************************************************************************************************
-*********************************************************************************************************
+                                        Section 2 : Mono
 *********************************************************************************************************
 
+                                    Lesson 7 - Setup project
+
+name: reactive-programming-playground
+package: com.jchaconv
+java: 21
+pom.xml: copy and paste dependencies & properties
+logback.xml in resource folder
+
+to get the correct version of java 21 delete the keys in the path of environment variables
+
+Prestar atención a las dependencias, no tenía la de starter web y la de testing, tuve que agregarlas para evitar
+errores de compilación.
+
+
+*********************************************************************************************************
+
+                        Lesson 8 - Publisher / Subscriber Implementation
+
+
+It's a fake Implementation of the different interfaces and see how they interact between them.
+Not necessary, go to the next lesson.
+
+sec02.publisher
+sec02.subscriber
+
+*********************************************************************************************************
+
+                        Lesson 9 - Mono / Flux Introduction
+
+Reactor is an implementation of reactive streams, something like Hibernate to Jpa.                        
+Reactor has to interfaces: Mono and Flux.
+
+(They are Publishers)
+
+Mono:
+    - It emits 0 or 1 item
+    - Followed by an onComplete / onError
+
+Flux:
+    - It emits 0, 1 or N items
+    - Followed by an onComplete / onError
+
+
+                        Lesson 10 - Why do we need Mono?
+
+Si solo espero 0 o 1 item es mejor usar Mono. Por ejemplo, cuando busco un usuario por id (findById)
+
+    Flux:
+        - Stream of messages
+        - Backpressure (¿Qué sucede cuando un Consumer no puede manejar todos los mensajes que emite un Publisher?)
+            is a mechanism that allows a consumer to signal a producer to slow down when data is being emitted
+            faster than it can be consumed
+        - Many additional methods specific to handle stream processing
+    
+    Mono:
+        - No Stream!
+        - No Backpressure
+        - A ligth weight publisher
+        - Good for Request -> Response model
+
+
+*********************************************************************************************************
+
+                        Lesson 11 - Lazy Stream
+
+
+Los streams son Lazy ya que no ejecutan nada si no tienen un "terminal operator"
+
+La programación reactiva es similar porque está en un estilo functional y no se ejecutará nada hasta llamar
+o conectar al subscriber.
+
+sec02.Lec01LazyStream.java                        
+
+*********************************************************************************************************
+
+
+just            ->  When the value is in memory already
+empty           ->  No item to emit
+error           ->  Emit error
+fromSupplier    ->  defer execution by using Supplier<T>
+fromCallable    ->  defer execution by using Callable<T>
+fromFuture      ->  Publisher from CompletableFuture<T>
+
+
+                    Lesson 12 - Mono just
+
+El método subscribe acepta un Subscriber o un Consumer y luego de setearlo se tiene que hacer el request mediante el
+subscription. Es la manera de crear un publisher Mono.just("julio");
+
+
+
+sec02.Lec02MonoJust.java
+
+
+*********************************************************************************************************
+
+
+                                        Lesson 13 - Mono Subscribe
+
+Se usa el método mono.subscribe(), puede recibir uno o más parámetros
+en el ejemplo se está proporcionando:
+    - el primer consumer para emitir
+    - el segundo para loggear el error
+    - Runnable para loggear un mensaje de completado
+    - y el subscription no es necesario porque el request se hace automáticamente
+
+Además luego de mono.just(1) se puede hacer transformación con map() 
+
+
+*********************************************************************************************************
 
 
 
 
 
+*********************************************************************************************************
 
 
+*********************************************************************************************************
+
+
+*********************************************************************************************************
+
+
+*********************************************************************************************************
+
+
+*********************************************************************************************************
+
+
+*********************************************************************************************************
 
 
 
