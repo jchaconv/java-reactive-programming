@@ -114,6 +114,9 @@ Communication patterns:
 It's a paradigm designed to process "streams of messages" in a "non-blocking" and "asynchronous" manner,
 while handling "back pressure". It's base on Observer pattern.
 
+Reactive stream is a specification
+    - Reactor is an implementation
+
 
 *********************************************************************************************************
 
@@ -364,18 +367,182 @@ Además luego de mono.just(1) se puede hacer transformación con map()
 
 *********************************************************************************************************
 
+Lesson 14 - Creating default subscriber
+
+Consiste en crear una clase que tenga el request, error y completed para no escribirlos en cada ejericio una y otra vez.
+Sin embargo, lo haré manualmente para consolidar ese conocimiento.
+
+    - onSubscribe()  -> request
+    - onNext()
+    - onError()
+    - onComplete()
+
+el atributo name en la clase está para diferenciar el objeto o clase que recibe el item
+
+en el util estoy creando la instancia del defaultsubscriber para que le pueda indicar el nombre del subscriber
+o dejarlo vacío.
 
 
+i -> log.info("recibido {}", i),
+err -> log.error("error", err),
+() -> log.info("completed")
 
+common.DefaultSubscriber.java
+common.Util.java
 
 *********************************************************************************************************
 
+Lesson 15 - Mono empty / error
+
+Se puede usar Mono.empty para casos en los que se quiera retornar algo como null.
+
+Lec04MonoEmptyError.java
 
 *********************************************************************************************************
 
+Lesson 16 - Mono from Supplier
+
+Me queda claro que just() solo se debe usar cuando el o los items ya están en memoria. Porque con solo declarar
+Mono.just() ya se está ejecutando lo que está dentro que puede ser un método. Y suppongamos que se trata de un proceso
+computacional que requiere mucha memoria, entonces estaríamos ejecutando cuando no es necesario.
+
+Por ejemplo:
+ - Al crear Mono.just(sum(list));   ----> solo con esto ya se estaba ejecutando el método sum() sin necesidad de un subscriber()
+   y por eso no es el mejor enfoque.
+
+Necesitamos retrasar la ejecución y para eso está fromSupplier. Ejemplo:
+
+Mono.fromSupplier(sum(list))  -----> ya que esta línea por si sola no ejecuta nada así como la interfaz Supplier necesita de su método get()
+                                     para recién ejecutarse y proveer un valor o valores.
+
+Usar Supplier retrasa la ejecución (delaying the execution)
+
+Lec05MonoFromSupplier.java
 
 *********************************************************************************************************
 
+Lesson 17 - Mono from Callable
+
+Si el método sum() tiene un throws Exception el Mono.fromSupplier() no lo puede
+manejar correctamente, necesita de un try/catch y serían muchas líneas dificiles de leer.
+Por eso es mejor usar fromCallable() para escenarios donde se lance una Exception.
+
+Lec06MonoFromCallable.java
+
+*********************************************************************************************************
+
+Lesson 18 - Mono from Runnable
+
+Cuando no hay un item que estoy buscando y no solo retornar un Mono.empty() es mejor usar un fromRunnable
+que llame a un método que haga algún tipo de logger o guardado de info en bd de productos que no están disponibles.
+Creo que puede ser útil para los casos de envío de mensajes por wsp donde el teléfono es incorrecto o no tiene wsp
+activado.
+
+Lec07MonoFromRunnable.java
+
+*********************************************************************************************************
+
+Lesson 19 - Mono from Future
+
+Se usa CompletableFuture y si ejecuto no se genera el nombre porque esa interfaz usa un hilo independiente.
+Necesito esperar cierto tiempo para poder ver su respuesta. Por eso se creó el Util sleep.
+
+En programación reactiva la mayoría debe ser LAZY. Y al igual que Mono.just(sum(list)) que sin tener el subscriber
+ya hacía el trabajo de ejecutar el método sum(); lo mismo sucede con Mono.fromFuture(getName()), no tiene el subscriber
+pero igual hace el trabajo de getName().
+
+Por eso fromFuture() no solo acepta un CompletableFuture sino también un Supplier. Ejemplo:
+Por si solo Mono.fromFuture(Lec08MonoFromFuture::getName) no ejecuta nada pero si conectamos el subscriber si.
+
+
+
+
+Lec08MonoFromFuture.java
+
+*********************************************************************************************************
+
+Lesson 20 - Publisher Create vs Execute
+
+Crear un publisher es una muy ligera tarea.
+En este ejemplo vemos que si entra al logger de getName() y según lo que he visto en fromSupplier()
+eso no debería pasar? Sin embargo, la diferencia está en que solo entra al método y crea el Publisher
+mas no lo ejecuta. Como se puede comprobar la ejecución; ya que no espera los 3 segundos, solo está creando el
+Publisher mas no se ejecuta. Para que se ejecute la tarea debemos añadir el subscribe()
+
+Lec09PublisherCreateVsExecution.java
+
+*********************************************************************************************************
+
+Lesson 19 - Mono Defer
+
+Para retrasar la creación de un Publisher. To delay the Publisher creation.
+Se puede ver que incluso solo con la llamada a createPublisher() sin el subscribe()
+ya se gasta tiempo y sin haber ejecutado el fromSupplier(). Es decir, se gastó tiempo solo en crear el Publisher.
+
+¿Cómo se puede retrasar esta creación? ¿How to delay this? -> Defer
+
+Mono.defer(() -> createPublisher()); ---> de esta manera el proceso termina automáticamente sin tiempos de espera.
+
+Lec10MonoDefer.java
+
+*********************************************************************************************************
+
+Para usar la dependencia:
+
+https://github.com/vinsguru/java-reactive-programming-course/blob/master/02-external-services/external-services-instructions.md
+
+java -jar external-services.jar                     ---> usa el 7070 por defecto
+java -jar external-services.jar --server.port=8080  ---> si se necesita cambiar
+
+localhost:7070/webjars/swagger-ui/index.html
+
+reactor netty para peticiones http
+
+*********************************************************************************************************
+
+Lesson 20 - Non-Blocking IO Client
+
+Se crea una clase abstract para manejar las peticiones
+
+LoopResources es un manager, para crear el httpClient se necesita este LoopResources.
+
+En ExternalServiceClient se usa responseContent() y este retorna una colección de Bytes.
+Con Flux se simplifica esto. asString() retorna un Flux<String> por eso usamos next() para obtener
+el valor.
+
+En Lec11NonBlockingIO se obtiene el Publisher y se hace el subscribe para obtener el item
+Se necesita bloquear el "main thread" para ver el resultado.
+
+aparentemente solo es un request-response pero al poner dentro del loop vemos que un simple thread
+se encarga de hacer toda la tarea. No está en orden la tarea porque se hacen los requests todos a la vez por
+ser non-blocking. Se intentó con 50 y 100 requests.
+
+common.AbstractHttpClient.java
+sec02.client.ExternalServiceClient.java
+sec02.Lec11NonBlockingIO.java
+
+*********************************************************************************************************
+
+Lesson 21 - How event loop works
+
+todos los items son añadidos a la cola (outbound queue)
+se ponen las respuestas que están listas en otra cola (inbound queue)
+
+Si se usara block se pierden los beneficios de reactive programming.
+el proceso es mucho más lento, es enviar un request y esperar el response correspondiente y no
+avanzar hasta obtener respuesta. Con block() si se vuelve secuencial como la programación tradicional.
+
+Se deja el código comentado en Lec11NonBlockingIO.java
+*********************************************************************************************************
+
+Assignment - FileService
+
+Create FileService
+    read file & return content
+    create file & write content
+    delete file
+
+Lec12Assignment.java
 
 *********************************************************************************************************
 
