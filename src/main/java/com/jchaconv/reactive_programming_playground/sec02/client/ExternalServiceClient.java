@@ -13,5 +13,4 @@ public class ExternalServiceClient extends AbstractHttpClient {
                 .next();
     }
 
-
 }

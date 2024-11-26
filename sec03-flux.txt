@@ -1,0 +1,143 @@
+*********************************************************************************************************
+                                        Section 3 : Flux
+*********************************************************************************************************
+
+Los más usados:
+
+just
+fromIterable
+fromArray
+fromStream
+
+Flux - Just
+
+Muy similar al comportamiento que tiene just con Mono.
+sec03.Lec01FluxJust.java
+
+*********************************************************************************************************
+
+Flux - Multiple Subscribers
+
+En los diferentes subscribers que se pueden crear se da la posibilidad de hacer operaciones de streams
+como filter, map, etc.
+
+sec03.Lec02MultipleSubscribers.java
+
+*********************************************************************************************************
+
+Flux - From Array / List
+
+fromIterable cuando se debe crear el publisher desde una lista.
+fromArray cuando es un arreglo
+
+Lec03FluxFromIterableOrArray.java
+
+*********************************************************************************************************
+
+Flux - From Stream
+
+Si se hace un stream.forEach dos veces para imprimir
+stream.forEach(System.out::println) se hace bien la primera vez mas no la segunda.
+
+Por eso una vez que es recorrido y usado el stream no se puede usar otra vez. Por eso doble subscribe con Flux.fromStream
+da error. Si se quiere evitar este comportamiento es necesario crear el stream con un Supplier.
+
+Lec04FluxFromStream.java
+
+*********************************************************************************************************
+
+Flux - Range
+
+Funciona como un loop for, muy similar a los que vimos en functional programming
+Consiste en lo siguiente:
+Flux.range(1, 10) ----> empiezo en el 1 y dame 10 númneros
+Flux.range(3, 10) ----> empiezo en el 3 y dame 10 números, por eso va  desde el 3 al 12
+
+Se puede operar con map para hallar los primeros nombres.
+
+Lec05FluxRange.java
+
+*********************************************************************************************************
+
+Log Operator
+
+Es un operator para debuggear. Se muestra lo que hace durante el proceso de ejecución.
+siempre mostrará la traza de la cual está suscrita. Por ejemplo el log del range es diferente
+del log del map.
+
+Lec06Log.java
+
+*********************************************************************************************************
+
+Flux vs List
+
+Se creó NameGenerator para simular la generación de nombres.
+
+getNamesList() -----> se toma los 10 segundos para mostrar todos los nombres. Si se cancela la operación no muestra nada.
+                      Ex: Gemini
+
+getNamesFlux() -----> apenas emite 1 item lo muestra para que la reacción pueda darse. Si veo que con el 2do item me basta puedo cancelar.
+                      solo se puede hacer esto en programación reactiva.
+                      Ex: Chatgpt
+
+Lec07FluxVsList.java
+
+*********************************************************************************************************
+
+Mono/Flux no son data structures como un tomatodo o un bidon
+mas bien son pipelines para pasar data de un lado a otro como una tubería
+
+Flux - Non-Blocking IO Stream - Demo
+
+/demo02/name/stream  ----> emite nombres cada 500ms
+
+Se creó un nuevo cliente en sec03.
+Se ve que se pueden consumir los items de una manera muy eficiente.
+
+Lec08NonBlockingStreamingMessages.java
+
+*********************************************************************************************************
+
+Flux - Interval
+
+Sirve para casos como estos: Emitir un mensaje cada 4 sec
+No olvidar bloquear el main-thread con un sleep y evitar que termine automáticamente.
+Lec09FluxInterval.java
+
+*********************************************************************************************************
+
+Flux - Empty / Error
+
+El comportamiento es muy similar a Mono.
+
+empty() ---> se emite el completed solamente.
+error() ---> muestra el error, no hay mucho por decir
+
+Lec10FluxEmptyError.java
+
+*********************************************************************************************************
+Flux - defer
+Flux.defer() ----> acepta un Supplier para retrasar la ejecución
+*********************************************************************************************************
+
+Mono/Flux Conversion
+
+Flux.from() ----> acepta un Publisher y es ahí donde podemos hacer la conversión
+
+flux.next() ---> solo otorga un valor
+
+Mono.from() ----> también acepta un Publisher y se puede convertir un Flux en un Mono
+
+Lec11FluxMono.java
+
+*********************************************************************************************************
+
+*********************************************************************************************************
+
+*********************************************************************************************************
+
+*********************************************************************************************************
+
+*********************************************************************************************************
+
+*********************************************************************************************************
