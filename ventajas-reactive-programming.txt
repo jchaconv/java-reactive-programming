@@ -1,0 +1,12 @@
+
+***************************************************************************************
+                                 Ventajas - Reactive Programming
+***************************************************************************************
+
+- Permite comunicaciones de tipo non-blocking y async
+
+- Se pueden emitir items que ya se tienen listos, no es necesario esperar a que termine
+  el proceso y que salga bien para al final entregar la data completa. Se puede dar
+  parcialmente.
+
+-

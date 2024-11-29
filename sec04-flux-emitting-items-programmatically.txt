@@ -1,0 +1,168 @@
+*********************************************************************************************************
+                            Section 4 : Flux - Emitting items programmatically
+*********************************************************************************************************
+
+Index:
+    - Flux Create / Generate
+    - Flux Sink Thread Safety
+    - Flux Create - Default Behavior
+    - Flux take operators (take, takeWhile, takeUntil)
+    - Flux generate
+    - Flux generate state problem
+
+Flux Create ---> FluxSink
+Flux Generate  ----> AsynchronousSink
+
+
+*********************************************************************************************************
+
+Lesson 1 - Flux Create
+
+Anteriormente he creado Flux desde una lista o array; pero para enviar datos programmatically necesito
+usar Flux.create() ---> acepta un Consumer que extiende de FluxSink y nos permitirá usar sus métodos.
+
+next() ---> para emitir un item
+complete() ---> para completar la emisión
+
+Se puede usar dentro de loop para emitir items --- ventaja
+Por ejemplo, emitir paises hasta llegar a Canada.
+
+(lo que aparece comentado lo hice para entender mejor la creación de un Flux con create())
+
+Por default lo que hace un fluxSink es almacenar los items en una queue y una vez que un susbscriber haga
+cancel() ya no podrá solicitar nuevamente los items restantes porque serán borrados de la memoria.
+
+
+Lec01FluxCreate.java
+
+*********************************************************************************************************
+Lesson 2 - Flux Create Refactor
+
+Cuando la lógica es muy grande es mejor no meter todo en la función lambda.
+
+Solo da una idea de un refactor y el uso de var ayuda bastante.
+
+helper.NameGenerator
+Lec02FluxCreateRefactor
+
+*********************************************************************************************************
+
+Lesson 3 - Flux Sink Thread Safety
+
+Runnable es una tarea (recordatorio)
+
+java 17 ---> new Thread(runnable).start();
+
+En el método demo1NoThreadSafety() se supone que en el task estoy
+diciendo que se añadan 1000 elementos. Luego al crear los 10 threads para
+que ejecuten esa tarea se ve que hay inconsistencias porque el resultado final
+no es 10K sino cualquier cosa.
+
+
+Con el método demo2ThreadSafety() se puede ver que si se completan los 10K elementos
+usando el fluxSink. Lo que sucede es que todos los elementos pasan por el fluxSink
+y este los envía al Subscriber en oden, uno por uno. Pero no entiendo porqué la
+necesidad del generator.generate(). No pude hacerlo sin refactor.
+
+
+Lec03FluxSinkThreadSafety
+
+*********************************************************************************************************
+
+Lesson 4 - Flux Sink use cases
+
+fluxSink solo para casos donde hay un subscriber.
+
+Imaginemos que queremos obtener info de un producto por su id
+y tenemos un método que toma el userId para luego enviar correo relacionado
+al productId para incrementar ventas. Lo que puede pasar es que si manejamos ambas
+funcionalidades en un solo proceso se puede hacer pesado y afectar el performance.
+Por eso con fluxSink hacemos la tarea del userId para correos de manera non-blocking.
+
+*********************************************************************************************************
+
+Lesson 5 - Flux Take Operators
+
+    - take
+        Es como limit en functional programming
+        Con el subscribe que yo hago solo estoy indicando "dame todo lo que tengas"
+        Flux.range(1,10) puede emitir 10 valores pero take(3) solo emitirá 3 y luego hará cancel()
+
+        si pongo take(30) no hace diferencia porque solo emite 10 valores el range
+
+        lo puse en el método take()
+
+    - takeWhile
+        En lugar de aceptar un número como lo hace take() este operator takeWhile() acepta un Predicate.
+        Al cumplirse la condición(num -> num < 5) se ejecuta el cancel(). Los items emitidos fueron del 1 al 4.
+
+    - takeUntil
+        Stop when the condition is met + allows the last item
+        En este caso la condición es (num -> num < 5), obviamente 1 cumple la condición, lo emite y cancela.
+        Si la condición es (num -> num > 6) emite del 1 al 7 porque permite que pase ese último item.
+
+
+Lec05FluxTakeOperator
+
+*********************************************************************************************************
+
+Lesson6 - Flux generate()
+
+Acepta un consumer de synchronous sink. el cual tiene next() complete() error(). Lo normal.
+
+Este código falla porque solo puede emitir 1 item, al intentar emitir el segundo sale error:
+
+    Flux.generate(synchronousSink -> {
+                synchronousSink.next(1);
+                synchronousSink.next(2);
+                synchronousSink.complete();
+            }).subscribe(Util.subscriber());
+
+Si dejo comentado el next(2) y el complete() no sale error pero entra en un bucle infinito y
+no deja de emitir el item 1
+
+    Flux.generate(synchronousSink -> {
+                    synchronousSink.next(1);
+                    //synchronousSink.next(2);
+                    //synchronousSink.complete();
+                }).subscribe(Util.subscriber());
+
+Usando take(4) si puedo cortar a la cuarta vez
+
+    Flux.generate(synchronousSink -> {
+                synchronousSink.next(1);
+                //synchronousSink.next(2);
+                //synchronousSink.complete();
+            })
+                    .take(4)
+                    .subscribe(Util.subscriber());   ---> con solo esto pide Long.MAX_VALUE como tengo especificado
+
+En resumen synchronousSink maneja el loop automáticamente y solo emite un valor una y otra vez dependiendo
+del "downstream demand". Si stopea cuando hay un error o cuando el downstream cancela.
+
+Lec06FluxGenerate
+Lec07FluxGenerateUntil ---> emitir hasta que emita Peru, dos maneraas de hacerlo, una con el if y otra con takeUnitl
+
+*********************************************************************************************************
+
+Lesson 8 - Flux Generate State Problem
+
+Uso el caso del ejemplo anterior donde se usa if para luego llamar al complete.
+Ahora imaginemos que solo debo emitir 10 items o hasta que salga "peru" sin usar un take operator.
+Lo lógico sería pensar en un contador que se incrementa luego de emitir el pais e incluirlo en la
+validación del if que hace el complete pero el problema es que como la función se
+ejecuta una y otra vez este contador se pierde, por ello no es una opción.
+(lo dejo comentado en el código)
+
+Con AtomicInteger funciona pero no se puede utilizar fuera de la función.
+
+Flux.generate() provee una opción para mantener el state, en uno de sus override. Puede ser útil para ciertos casos como abrir y cerrar
+conexiones con db(no hacerlo una y otra vez en el bucle)
+
+El último consumer donde se imprime el state también se puede omitir.
+
+Lec08FluxGenerateWithState
+
+*********************************************************************************************************
+
+
