@@ -1,0 +1,193 @@
+*********************************************************************************************************
+                                            Section 5 : Operators
+*********************************************************************************************************
+
+Operators => Decorators
+Lo mismo que en functional programming, operadores en el pipeline que permiten hacer operaciones con los items.
+
+Ya hemos visto:
+    - filter
+    - map
+    - log
+    - take
+    - takeWhile
+    - takeUntil
+
+Index:
+    - Handle
+    - Do Hooks / Callbacks
+    - delay
+    - subscribe con hooks doOnNext() doOnComplete() doOnError()
+    - error handling: onErrorReturn, onErrorResume
+    - defaultIfEmpty and switchIfEmpty
+    - timeout & multiple timeouts
+    -
+    -
+    -
+    -
+    -
+
+
+*********************************************************************************************************
+
+Lesson 1 - Handle
+
+Es como un filter + map. Se puede operar con el item y SynchronousSink
+Se añadió cast() porque hasta ahí era Flux<Object>
+el filter() es para que no aparezca el error del caso 7
+
+Mi solución funciona pero tenía líneas innecesarias. Es como el ejemplo del Generate de la sección
+anterior pero esta vez usando handle.
+
+Lec01Handle
+Lec02HandleAssignment
+
+*********************************************************************************************************
+
+Lesson 3 - Do Hooks / Callbacks
+
+En el código se muestran todos los hooks y el orden de ejecución
+empieza como de abajo hacia arriba porque inicia desde el subscribe perspective.
+
+-- comentar el fori para ver solo lo necesario al inicio --
+-- probar solo el mensaje de error --
+
+Lec03DoCallbacks
+
+*********************************************************************************************************
+
+Lesson 4 - Delay Elements
+
+Para retrasar el envío de los items al subscriber.
+delayElements()
+
+Sin delayElements() hay un request(unbounded) lo cual no especifica cuántos items quiero sino "dame todo lo que tengas"
+pero al agregar delayElements() se ve el request(1) es decir va pidiendo items de 1 en 1. Interesante.
+
+Se necesita bloquear el main thread con un sleep adicional para que no termine el programa
+abruptamente
+
+
+Lec04Delay
+
+*********************************************************************************************************
+
+Lesson 5 - Subscribe con hooks
+
+Se puede crear un subscriber con el Util que estamos utilizando
+o también de esta manera con hooks, el resultado es el mismo:
+
+Flux.range(1, 10)
+                .doOnNext(i -> log.info("received: {}", i))
+                .doOnComplete(() -> log.info("completed"))
+                .doOnError(err -> log.error("error", err))
+                .subscribe();
+
+*********************************************************************************************************
+
+Lesson 6 - Error handling
+
+en poo tenemos try/catch
+
+.map(i -> i == 5 ? 5/0 : i)  ---> si el numero es 5 divide entre 0 sino retorna el número
+Al llegar a 5 se emite el error y se deja de consumir el pipeline.
+
+Con onErrorReturn(-1) devuelvo -1 en caso de error y no muestro la traza de error pero igual se corta
+la ejecución del pipeline. Es importante donde se pone porque el producer del onErrorReturn va a ser la línea
+que esté justamente antes de él.
+
+Quizás no quiero retornar -1 en todos los errores sino solo cuando es cierta excepcion
+
+.onErrorReturn(IllegalArgumentException.class, -1)
+.onErrorReturn(ArithmeticException.class, -2)
+.onErrorReturn(-3) ----> para cualquier otro caso
+
+También se puede invocar a otro método o service para hacer algo en caso de error. En este caso es generar otro número random.
+
+.onErrorResume(ex -> fallback())
+.onErrorResume(ArithmeticException.class, ex -> fallback())   ---> también se puede especificar el tipo de exception
+.onErrorReturn(-5) ---> se puede combinar con onErrorResume()
+
+se pueden usar varios fallbacks en el pipeline y con onErrorReturn podemos usarlo para un error por default incluso si uno de los
+fallbacks falla, porque estos fallbacks pueden ser invocaciones a otros servicios.
+
+En este código también falla el fallback2 con otra exception y no se muestra el error sino que se emite el -5
+
+Mono.error(new RuntimeException("oops"))
+                .onErrorResume(ArithmeticException.class, ex -> fallback1())
+                .onErrorResume(ex -> fallback2())
+                .onErrorReturn(-5)
+                .subscribe(Util.subscriber());
+
+
+onErrorComplete() para emitir el complete signal en caso de error y no emitir el error producido
+Si uso Mono.just(1) y luego el onErrorComplete(); se emite el item 1 y luego aparece el complete signal.
+
+Muy importante!!!!
+Hasta ahora solo hemos visto que en caso de un error la data deja de consumirse y se stopea el pipeline.
+Con .onErrorContinue() se puede mostrar el objeto que causa el eror y también la exception completa. Luego
+de eso sigue con la ejecución del pipeline(). Es muy buena esta opción.
+
+
+Lec06ErrorHandling
+
+*********************************************************************************************************
+
+Lesson 7 - Default if empty
+
+Cuando no hay items para emitir, de repente no pasan cierta validacion, puedo emitir algo por defecto
+con defaultIfEmpty()
+
+Lec07DefaultIfEmpty
+
+*********************************************************************************************************
+
+Lesson 8 - Switch if empty
+
+Con esta opción puedo hacer un cambio a otro Publisher o fallback en caso que no tenga data.
+Es la opción similar a defaultIfEmpty pero en lugar de emitir un item como valor en duro, llamo a otro método
+
+switchIfEmpty()
+
+
+Lec08SwitchIfEmpty
+
+*********************************************************************************************************
+
+Lesson 9 - Tiemout
+
+Con timeout() se puede mostrar la exception generica o también se puede invocar a un fallback
+
+Los multiples timeouts son basicamente como está en el método main
+
+Lec09Timeout
+
+*********************************************************************************************************
+
+Lesson 10 - Operator - transform
+
+transform() permite reutilizar lógica en un pipeline
+
+getCustomers() y getPurchaseOrders() usan lo mismo, entonces ahí puedo usar transform() para no replicar el mismo código
+dos veces.
+ .doOnNext(i -> log.info("received {}", i))
+                .doOnComplete(() -> log.info("completed!"))
+                .doOnError(err -> log.error("error", err))
+                .subscribe();
+
+Function.identity() ----> solo retorna el obj tal cual como llega
+
+
+Lec10Transform
+
+*********************************************************************************************************
+
+Assignment
+
+    - Invocacion a servicios
+    - se crearon 3 paths en el client y con timeout() y switchIfEmpty() se hace la invocacion.
+    -
+
+
+
+*********************************************************************************************************

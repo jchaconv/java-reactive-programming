@@ -11,7 +11,7 @@ Index:
     - Flux generate state problem
 
 Flux Create ---> FluxSink
-Flux Generate  ----> AsynchronousSink
+Flux Generate  ----> SynchronousSink
 
 
 *********************************************************************************************************

@@ -9,4 +9,8 @@
   el proceso y que salga bien para al final entregar la data completa. Se puede dar
   parcialmente.
 
--
+- Puedes pedir al publisher items de 1 en 1 con delayElements()
+
+
+- Se pueden manejar los errores y continuar con la obtención de data en el pipeline.
+  Por ejemplo con .onErrorConsume()
