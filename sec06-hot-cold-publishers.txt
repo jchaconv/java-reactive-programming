@@ -1,0 +1,99 @@
+*********************************************************************************************************
+                                     Section 6 : Hot & Cold Publishers
+*********************************************************************************************************
+
+Cold Publisher => Como Netflix. Se establece un stream independiente para cada "Subscriber". Si uno pausa la peli
+                  otro subscriber no se ve afectado.
+
+
+Hot Publisher => Como un canal de tv o peli en el cine. Si un subscriber llega tarde se perdió el contenido que ya pasó.
+
+
+
+Index:
+    - Hot Publisher
+        - share()
+        - publish().refCount(x)
+        - resubscribe concept
+        - auto connect
+        - cache
+    -
+    -
+    -
+    -
+    -
+    -
+    -
+
+
+*********************************************************************************************************
+
+Lesson 2 - Hot Publisher
+
+Para hacer el ejemplo un Hot Publisher debemos agregar .share()
+con esto simulamos un Cine transmitiendo una pelicula y no un streaming
+de Netflix. Vemos que el subscriber "rutiluye" empieza a ver desde la
+escena-3
+
+    var movieFlux = movieStream().share();
+
+Se agregaron take() en cada subscriber para demostrar que sin subscribers pidiendo
+emisión de items el publisher deja de generar la data.
+
+publish().refCount(1)    ---> Funciona como share() y quiere decir que como mínimo
+                              debe haber un subscriber para emitir los items.
+
+
+Re-subscribe concept: Supongamos que al primer subscribe "jchaconv" le ponemos take(1)
+                      veremos que una vez que haga el complete() el stream vuelve a ejecutarse.
+                      Es decir, se vuelve a emitir la peli nuevamente; porque es necesario que
+                      al menos haya un subscriber.
+
+
+Lec02HotPublisher
+
+*********************************************************************************************************
+
+Lesson 3 - Hot Publisher Auto Connect
+
+Sirve para emitir incluso cuando no hay ningún subscriber. Si se deja vacío
+el autoConnect() por default toma 1.
+
+    .publish()
+    .autoConnect()
+
+Al dejar como .autoConnect(0) veo que empieza a transmitir incluso con ningún
+subscriber.
+
+Lec03HotPublisherAutoConnect
+
+*********************************************************************************************************
+
+Lesson 4 - Hot Publisher Cache
+
+Sin el replay(x) ----> x indica la cantidad de items que quieres guardar
+los subscribers reciben items en el momento en que se unen.
+
+Lec04HotPublisherCache
+
+*********************************************************************************************************
+
+
+
+
+*********************************************************************************************************
+
+
+
+
+*********************************************************************************************************
+
+
+
+
+*********************************************************************************************************
+
+
+
+
+*********************************************************************************************************
